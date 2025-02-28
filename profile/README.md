@@ -1,1 +1,1 @@
-![Header image](/profile/terminally-online-header.png)
+![Header image](/profile/terminally-online-header.png?q=1)
