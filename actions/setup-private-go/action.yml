@@ -45,12 +45,13 @@ runs:
 
     - name: Wait for token propagation
       shell: bash
+      working-directory: ${{ runner.temp }}
       run: |
         IFS=', ' read -ra repos <<< "$(echo "${{ inputs.repositories }}" | tr '\n' ' ')"
         for repo in "${repos[@]}"; do
           [ -z "$repo" ] && continue
           for attempt in 1 2 3 4 5; do
-            if git ls-remote --exit-code "https://github.com/${{ github.repository_owner }}/${repo}" HEAD > /dev/null 2>&1; then
+            if git ls-remote --exit-code "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository_owner }}/${repo}" HEAD > /dev/null 2>&1; then
               break
             fi
             if [ "$attempt" = "5" ]; then
