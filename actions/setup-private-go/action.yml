@@ -42,3 +42,21 @@ runs:
       run: |
         git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
         echo "GOPRIVATE=${{ inputs.goprivate }}" >> "$GITHUB_ENV"
+
+    - name: Wait for token propagation
+      shell: bash
+      run: |
+        IFS=', ' read -ra repos <<< "$(echo "${{ inputs.repositories }}" | tr '\n' ' ')"
+        for repo in "${repos[@]}"; do
+          [ -z "$repo" ] && continue
+          for attempt in 1 2 3 4 5; do
+            if git ls-remote --exit-code "https://github.com/${{ github.repository_owner }}/${repo}" HEAD > /dev/null 2>&1; then
+              break
+            fi
+            if [ "$attempt" = "5" ]; then
+              echo "::error::app token never propagated for ${repo}"
+              exit 1
+            fi
+            sleep $((attempt * 2))
+          done
+        done
